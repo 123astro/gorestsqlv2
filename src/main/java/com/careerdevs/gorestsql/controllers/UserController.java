@@ -26,6 +26,7 @@ public class UserController {
             //check the range => other things to do
 
             String url = "https://gorest.co.in/public/v2/users/" + uID;
+            System.out.println(url);
 
             User foundUser = restTemplate.getForObject(url, User.class);
 
