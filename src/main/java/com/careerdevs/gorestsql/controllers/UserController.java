@@ -36,6 +36,7 @@ public class UserController {
             return new ResponseEntity<>("Id must be a number", HttpStatus.NOT_FOUND);
 
         } catch (Exception e) {
+
             System.out.println(e.getMessage());
             System.out.println(e.getClass());
 
