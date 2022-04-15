@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Optional;
+
 
 @RestController
 @RequestMapping("/user")
@@ -23,12 +25,47 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
+//    @GetMapping("/{id}")
+//    public ResponseEntity<?> getUserById(@PathVariable("id") String id) {
+//        try {
+//
+//            if (ApiErrorHandling.isStrNaN(id)) {
+//                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, id + " is not a valid ID");
+//            }
+//
+//            int uID = Integer.parseInt(id);
+//
+//            Optional<User> foundUser = userRepository.findById(uID);
+//
+//            if (foundUser.isEmpty()) {
+//                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, " User not found with ID: " + id);
+//            }
+//            //check the range => other things to do
+//
+//            String url = "https://gorest.co.in/public/v2/users/" + uID;
+//            System.out.println(url);
+//
+//            User foundUser = restTemplate.getForObject(url, User.class);
+//
+//            assert foundUser != null; //0
+//            User savedUser = userRepository.save(foundUser);
+//
+//            return new ResponseEntity<>(savedUser, HttpStatus.OK);
+//
+//        } catch (HttpClientErrorException e) {
+//            return ApiErrorHandling.customApiError(e.getMessage(), e.getStatusCode());
+//        } catch (Exception e) {
+//            return ApiErrorHandling.genericApiError(e);
+//        }
+//    }
+
+
     @GetMapping("/upload/{id}")
     public ResponseEntity<?> uploadUserById(@PathVariable("id") String userId, RestTemplate restTemplate
     ) {
         try {
 
-            if (ApiErrorHandling.isStrNaN(userId)){
+            if (ApiErrorHandling.isStrNaN(userId)) {
                 throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, userId + " is not a valid ID");
             }
 
@@ -40,12 +77,13 @@ public class UserController {
             System.out.println(url);
 
             User foundUser = restTemplate.getForObject(url, User.class);
+
             assert foundUser != null; //0
             User savedUser = userRepository.save(foundUser);
 
-            return new ResponseEntity<>("Temp", HttpStatus.OK);
+            return new ResponseEntity<>(savedUser, HttpStatus.OK);
 
-        } catch (HttpClientErrorException e ) {
+        } catch (HttpClientErrorException e) {
             return ApiErrorHandling.customApiError(e.getMessage(), e.getStatusCode());
         }
 
