@@ -2,12 +2,16 @@ package com.careerdevs.gorestsql.controllers;
 // all code in here
 
 import com.careerdevs.gorestsql.models.User;
+import com.careerdevs.gorestsql.repos.UserRepository;
+import com.careerdevs.gorestsql.utils.ApiErrorHandling;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 
@@ -16,10 +20,17 @@ import org.springframework.web.client.RestTemplate;
 
 public class UserController {
 
+    @Autowired
+    private UserRepository userRepository;
+
     @GetMapping("/upload/{id}")
     public ResponseEntity<?> uploadUserById(@PathVariable("id") String userId, RestTemplate restTemplate
     ) {
         try {
+
+            if (ApiErrorHandling.isStrNaN(userId)){
+                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, userId + " is not a valid ID");
+            }
 
             int uID = Integer.parseInt(userId);
 
@@ -29,20 +40,31 @@ public class UserController {
             System.out.println(url);
 
             User foundUser = restTemplate.getForObject(url, User.class);
+            assert foundUser != null; //0
+            User savedUser = userRepository.save(foundUser);
 
             return new ResponseEntity<>("Temp", HttpStatus.OK);
 
-        } catch (NumberFormatException e) {
+        } catch (HttpClientErrorException e ) {
+            return ApiErrorHandling.customApiError(e.getMessage(), e.getStatusCode());
+        }
 
-            return new ResponseEntity<>("Id must be a number", HttpStatus.NOT_FOUND);
+//        catch (NumberFormatException e) {
+//
+//            return new ResponseEntity<>("Id must be a number", HttpStatus.NOT_FOUND);
+//        }
+        catch (Exception e) {
+            return ApiErrorHandling.genericApiError(e);
+        }
+    }
 
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllUser() {
+        try {
+            Iterable<User> allUsers = userRepository.findAll();
+            return new ResponseEntity<>(allUsers, HttpStatus.OK);
         } catch (Exception e) {
-
-            System.out.println(e.getMessage());
-            System.out.println(e.getClass());
-
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-
+            return ApiErrorHandling.genericApiError(e);
         }
     }
 }

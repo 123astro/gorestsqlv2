@@ -8,7 +8,7 @@ import javax.persistence.Id;
 @Entity
 public class User {
 
-    @Id
+    @Id //increments each time
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
