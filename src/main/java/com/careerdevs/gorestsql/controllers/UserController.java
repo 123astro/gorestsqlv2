@@ -7,13 +7,11 @@ import com.careerdevs.gorestsql.utils.ApiErrorHandling;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import javax.persistence.criteria.CriteriaBuilder;
 import java.util.Optional;
 
 
@@ -43,7 +41,7 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserById(@PathVariable("id") String id) {
         try {
-            // control over error message and you get the 400.
+            // control over error message and you get the 400. And code block is not needed.
             if (ApiErrorHandling.isStrNaN(id)) {
                 throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, id + " is not a valid ID");
             }
@@ -55,7 +53,7 @@ public class UserController {
             if (foundUser.isEmpty()) {
                 throw new HttpClientErrorException(HttpStatus.NOT_FOUND, " User not found with ID: " + id);
             }
-              return new ResponseEntity<>(foundUser, HttpStatus.OK);
+            return new ResponseEntity<>(foundUser, HttpStatus.OK);
 
         } catch (HttpClientErrorException e) {
             return ApiErrorHandling.customApiError(e.getMessage(), e.getStatusCode());
@@ -65,38 +63,117 @@ public class UserController {
     }
 
 
-    @GetMapping("/upload/{id}")
-    public ResponseEntity<?> uploadUserById(@PathVariable("id") String userId, RestTemplate restTemplate
-    ) {
+//    @GetMapping("/upload/{id}")
+//    public ResponseEntity<?> uploadUserById(@PathVariable("id") String userId, RestTemplate restTemplate
+//    ) {
+//        try {
+//
+//            if (ApiErrorHandling.isStrNaN(userId)) {
+//                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, userId + " is not a valid ID");
+//            }
+//
+//            int uID = Integer.parseInt(userId);
+//
+//            //check the range => other things to do
+//
+//            String url = "https://gorest.co.in/public/v2/users/" + uID;
+//            System.out.println(url);
+//
+//            User foundUser = restTemplate.getForObject(url, User.class);
+//
+//            assert foundUser != null; //0
+//            User savedUser = userRepository.save(foundUser);
+//
+//            return new ResponseEntity<>(savedUser, HttpStatus.OK);
+//
+//        } catch (HttpClientErrorException e) {
+//            return ApiErrorHandling.customApiError(e.getMessage(), e.getStatusCode());
+//        }
+//
+////        catch (NumberFormatException e) {
+////
+////            return new ResponseEntity<>("Id must be a number", HttpStatus.NOT_FOUND);
+////        }
+//        catch (Exception e) {
+//            return ApiErrorHandling.genericApiError(e);
+//        }
+//    }
+
+    @DeleteMapping("/deleteall")
+    public ResponseEntity<?> deleteAllUsers() {
         try {
 
-            if (ApiErrorHandling.isStrNaN(userId)) {
-                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, userId + " is not a valid ID");
-            }
+            long totalUsers = userRepository.count(); // count method whole number
+            userRepository.deleteAll();
 
-            int uID = Integer.parseInt(userId);
-
-            //check the range => other things to do
-
-            String url = "https://gorest.co.in/public/v2/users/" + uID;
-            System.out.println(url);
-
-            User foundUser = restTemplate.getForObject(url, User.class);
-
-            assert foundUser != null; //0
-            User savedUser = userRepository.save(foundUser);
-
-            return new ResponseEntity<>(savedUser, HttpStatus.OK);
+            return new ResponseEntity<Long>(totalUsers, HttpStatus.OK);
 
         } catch (HttpClientErrorException e) {
             return ApiErrorHandling.customApiError(e.getMessage(), e.getStatusCode());
-        }
 
-//        catch (NumberFormatException e) {
-//
-//            return new ResponseEntity<>("Id must be a number", HttpStatus.NOT_FOUND);
-//        }
-        catch (Exception e) {
+        } catch (Exception e) {
+            return ApiErrorHandling.genericApiError(e);
+        }
+    }
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<?> deleteUserById(@PathVariable("id") String id, RestTemplate restTemplate
+    ) {
+        try {
+
+            if (ApiErrorHandling.isStrNaN(id)) {
+                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, id + " is not a valid ID");
+            }
+
+            int uID = Integer.parseInt(id);
+
+            //check the range => other things to do
+
+            Optional<User> foundUser = userRepository.findById(uID);
+
+            if (foundUser.isEmpty()) {
+                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "User Not Found with ID: " + id);
+            }
+
+            userRepository.deleteById(uID);
+
+            return new ResponseEntity<>(foundUser, HttpStatus.OK);
+
+        } catch (HttpClientErrorException e) {
+            return ApiErrorHandling.customApiError(e.getMessage(), e.getStatusCode());
+        } catch (Exception e) {
+            return ApiErrorHandling.genericApiError(e);
+        }
+    }
+
+
+    @PostMapping("/upload/{id}")
+    public ResponseEntity<?> uploadUserById(
+            @PathVariable("id") String userId,
+            RestTemplate restTemplate // making an external api request
+    ) {
+
+        try {
+
+            if (ApiErrorHandling.isStrNaN(userId)) {
+                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, userId + "is not a valid ID");
+            }
+
+            int uId = Integer.parseInt(userId);
+
+            String url = "https://gorest.co.in/public/v2/users" + uId;
+
+            User foundUser = restTemplate.getForObject(url, User.class);
+            if (foundUser == null) {
+                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "User with ID:" + uId + " not found");
+            }
+
+            User savedUser = userRepository.save(foundUser);
+
+            return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
+        } catch (HttpClientErrorException e) {
+            return ApiErrorHandling.customApiError(e.getMessage(), e.getStatusCode());
+        } catch (Exception e) {
             return ApiErrorHandling.genericApiError(e);
         }
     }
