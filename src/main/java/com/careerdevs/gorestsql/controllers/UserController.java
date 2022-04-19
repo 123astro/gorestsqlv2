@@ -96,6 +96,8 @@ public class UserController {
         }
     }
 
+
+    //http://localhost:8080/user/all
     @GetMapping("/all")
     public ResponseEntity<?> getAllUser() {
         try {
