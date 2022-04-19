@@ -30,49 +30,39 @@ public class UserController {
         * Delete route that deletes all users from SQL database (returns how many users were deleted)
         * Post route that queries one user by ID from GoRest and saves their data to your local database
         (returns the SQL user data)
-        * Post route that uploads all users from the GoRest API into the SQL DATABASE (RETURNS how many
+        * Post route that uploads all users from the GoRest API into the SQL DATABASE (returns how many
         users were uploaded.)
-        * Post route that creates a user on the Just the SQL database (returns the newly created SQL user data)
-        * Put route that updates a user on Just the SQL database (returns the updated SQL user data)
+        * Post route that creates a user on JUST the SQL database (returns the newly created SQL user data)
+        * Put route that updates a user on JUST the SQL database (returns the updated SQL user data)
 
      */
 
     @Autowired
     private UserRepository userRepository;
 
-//    @GetMapping("/{id}")
-//    public ResponseEntity<?> getUserById(@PathVariable("id") String id) {
-//        try {
-//
-//            if (ApiErrorHandling.isStrNaN(id)) {
-//                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, id + " is not a valid ID");
-//            }
-//
-//            int uID = Integer.parseInt(id);
-//
-//            Optional<User> foundUser = userRepository.findById(uID);
-//
-//            if (foundUser.isEmpty()) {
-//                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, " User not found with ID: " + id);
-//            }
-//            //check the range => other things to do
-//
-//            String url = "https://gorest.co.in/public/v2/users/" + uID;
-//            System.out.println(url);
-//
-//            User foundUser = restTemplate.getForObject(url, User.class);
-//
-//            assert foundUser != null; //0
-//            User savedUser = userRepository.save(foundUser);
-//
-//            return new ResponseEntity<>(savedUser, HttpStatus.OK);
-//
-//        } catch (HttpClientErrorException e) {
-//            return ApiErrorHandling.customApiError(e.getMessage(), e.getStatusCode());
-//        } catch (Exception e) {
-//            return ApiErrorHandling.genericApiError(e);
-//        }
-//    }
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable("id") String id) {
+        try {
+            // control over error message and you get the 400.
+            if (ApiErrorHandling.isStrNaN(id)) {
+                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, id + " is not a valid ID");
+            }
+
+            int uID = Integer.parseInt(id);
+
+            Optional<User> foundUser = userRepository.findById(uID);
+
+            if (foundUser.isEmpty()) {
+                throw new HttpClientErrorException(HttpStatus.NOT_FOUND, " User not found with ID: " + id);
+            }
+              return new ResponseEntity<>(foundUser, HttpStatus.OK);
+
+        } catch (HttpClientErrorException e) {
+            return ApiErrorHandling.customApiError(e.getMessage(), e.getStatusCode());
+        } catch (Exception e) {
+            return ApiErrorHandling.genericApiError(e);
+        }
+    }
 
 
     @GetMapping("/upload/{id}")
