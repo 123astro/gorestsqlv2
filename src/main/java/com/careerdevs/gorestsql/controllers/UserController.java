@@ -22,6 +22,21 @@ import java.util.Optional;
 
 public class UserController {
 
+    /*
+    Required Routes for GoRestSQL MVP:
+        *Get route that returns one user by ID from the SQL database
+        *Get route that returns all users stored in the SQL database
+        * Delete route that deletes one user by ID from SQLa database (returns the deleted SQL DATA)
+        * Delete route that deletes all users from SQL database (returns how many users were deleted)
+        * Post route that queries one user by ID from GoRest and saves their data to your local database
+        (returns the SQL user data)
+        * Post route that uploads all users from the GoRest API into the SQL DATABASE (RETURNS how many
+        users were uploaded.)
+        * Post route that creates a user on the Just the SQL database (returns the newly created SQL user data)
+        * Put route that updates a user on Just the SQL database (returns the updated SQL user data)
+
+     */
+
     @Autowired
     private UserRepository userRepository;
 
