@@ -5,6 +5,7 @@ import com.careerdevs.gorestsql.models.User;
 import com.careerdevs.gorestsql.repos.UserRepository;
 import com.careerdevs.gorestsql.utils.ApiErrorHandling;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.persistence.criteria.CriteriaBuilder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 
 
@@ -178,6 +182,75 @@ public class UserController {
         }
     }
 
+    @PostMapping("/")
+    public ResponseEntity<?> createNewUser(@RequestBody User newUser) {
+        try {
+
+            User savedUser = userRepository.save(newUser);
+
+            return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
+
+        } catch (HttpClientErrorException e) {
+            return ApiErrorHandling.customApiError(e.getMessage(), e.getStatusCode());
+        } catch (Exception e) {
+            return ApiErrorHandling.genericApiError(e);
+        }
+    }
+
+    @PostMapping("/uploadall")
+    public ResponseEntity<?> uploadAll (
+            RestTemplate restTemplate
+    ) {
+        try {
+            String url = "https://gorest.co.in/public/v2/users";
+
+            ResponseEntity<User[]> response =restTemplate.getForEntity(url, User[].class);
+
+            User[] firstPageUsers = response.getBody();
+
+            assert firstPageUsers != null;
+            ArrayList<User> allUsers = new ArrayList<>(Arrays.asList(firstPageUsers));
+
+            HttpHeaders responseHeaders = response.getHeaders();
+
+            String totalPages = Objects.requireNonNull(responseHeaders.get("X-Pagination-Pages")).get(0);
+            int totalPgNum =Integer.parseInt(totalPages);
+
+            for (int i = 2; i <= totalPgNum; i++) {
+                String pageUrl = url + "?page=" + i;
+                User[] pageUsers = restTemplate.getForObject(pageUrl, User[].class);
+
+                assert pageUsers != null;
+                allUsers.addAll(Arrays.asList(firstPageUsers));
+
+            }
+
+            userRepository.saveAll(allUsers);
+
+            return new ResponseEntity<>("Users Created " + allUsers.size(), HttpStatus.OK);
+
+        } catch (Exception e){
+            System.out.println(e.getClass());
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @PutMapping("/")
+    public ResponseEntity<?> updateUser(@RequestBody User user) {
+        try {
+
+            User savedUser = userRepository.save(user);
+
+            return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
+
+        } catch (HttpClientErrorException e) {
+            return ApiErrorHandling.customApiError(e.getMessage(), e.getStatusCode());
+        } catch (Exception e) {
+            return ApiErrorHandling.genericApiError(e);
+        }
+    }
 
     //http://localhost:8080/user/all
     @GetMapping("/all")
