@@ -191,9 +191,8 @@ public class UserController {
             ValidationError newUserErrors = UserValidation.validateNewUser(newUser);
 
             if (newUserErrors.hasError()){
-                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, newUserErrors.toString())
+                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, newUserErrors.toString());
             }
-
 
             User savedUser = userRepository.save(newUser);
 
