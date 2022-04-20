@@ -188,11 +188,11 @@ public class UserController {
     public ResponseEntity<?> createNewUser(@RequestBody User newUser) {
         try {
 
-            ValidationError newUserErrors = UserValidation.validateNewUser(newUser);
+            ValidationError newUserErrors = UserValidation.validateNewUser(newUser, userRepository, true);
 
-            if (newUserErrors.hasError()){
+            if (newUserErrors.hasError()) {
                 throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, newUserErrors.toString());
-            }
+            } // no else block needed
 
             User savedUser = userRepository.save(newUser);
 
@@ -256,6 +256,12 @@ public class UserController {
     @PutMapping("/")
     public ResponseEntity<?> updateUser(@RequestBody User user) {
         try {
+
+            ValidationError newUserErrors = UserValidation.validateNewUser(user, userRepository, false);
+
+            if (newUserErrors.hasError()) {
+                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, newUserErrors.toString());
+            } // no else block needed
 
             User savedUser = userRepository.save(user);
 
