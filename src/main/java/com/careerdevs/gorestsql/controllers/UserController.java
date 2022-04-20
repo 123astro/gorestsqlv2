@@ -4,6 +4,8 @@ package com.careerdevs.gorestsql.controllers;
 import com.careerdevs.gorestsql.models.User;
 import com.careerdevs.gorestsql.repos.UserRepository;
 import com.careerdevs.gorestsql.utils.ApiErrorHandling;
+import com.careerdevs.gorestsql.validation.UserValidation;
+import com.careerdevs.gorestsql.validation.ValidationError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -186,6 +188,13 @@ public class UserController {
     public ResponseEntity<?> createNewUser(@RequestBody User newUser) {
         try {
 
+            ValidationError newUserErrors = UserValidation.validateNewUser(newUser);
+
+            if (newUserErrors.hasError()){
+                throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, newUserErrors.toString())
+            }
+
+
             User savedUser = userRepository.save(newUser);
 
             return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
@@ -198,41 +207,49 @@ public class UserController {
     }
 
     @PostMapping("/uploadall")
-    public ResponseEntity<?> uploadAll (
+    public ResponseEntity<?> uploadAll(
             RestTemplate restTemplate
     ) {
         try {
             String url = "https://gorest.co.in/public/v2/users";
 
-            ResponseEntity<User[]> response =restTemplate.getForEntity(url, User[].class);
+            ResponseEntity<User[]> response = restTemplate.getForEntity(url, User[].class);
 
             User[] firstPageUsers = response.getBody();
 
-            assert firstPageUsers != null;
+            // assert firstPageUsers != null;
+
+            if (firstPageUsers == null) {
+                throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to GET first page of " +
+                        "users from GOREST");
+            }
+
             ArrayList<User> allUsers = new ArrayList<>(Arrays.asList(firstPageUsers));
 
             HttpHeaders responseHeaders = response.getHeaders();
 
             String totalPages = Objects.requireNonNull(responseHeaders.get("X-Pagination-Pages")).get(0);
-            int totalPgNum =Integer.parseInt(totalPages);
+            int totalPgNum = Integer.parseInt(totalPages);
 
             for (int i = 2; i <= totalPgNum; i++) {
                 String pageUrl = url + "?page=" + i;
                 User[] pageUsers = restTemplate.getForObject(pageUrl, User[].class);
 
-                assert pageUsers != null;
+                if (pageUsers == null) {
+                    throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR,
+                            "Failed to GET first page " + i + " of users from GoRest ");
+                }
                 allUsers.addAll(Arrays.asList(firstPageUsers));
-
             }
 
             userRepository.saveAll(allUsers);
 
             return new ResponseEntity<>("Users Created " + allUsers.size(), HttpStatus.OK);
 
-        } catch (Exception e){
-            System.out.println(e.getClass());
-            System.out.println(e.getMessage());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (HttpClientErrorException e) {
+            return ApiErrorHandling.customApiError(e.getMessage(), e.getStatusCode());
+        } catch (Exception e) {
+            return ApiErrorHandling.genericApiError(e);
         }
     }
 
